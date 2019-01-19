@@ -26,7 +26,8 @@ A complete example of a form using this library is available in the
 This table provides a brief summary of the functions you can use to
 add a field to a FormResult. I'd really rather put it in the module
 documentation, but I couldn't figure out how to render a table in
-Elmdoc.
+Elmdoc. Leaving it here means it at least renders correctly on
+[Github](https://github.com/glasserc/elm-form-result).
 
 | Type to add    | Function to use  | Form fails validation if |
 | -------------- | ---------------- | ------------------------ |

@@ -59,8 +59,10 @@ and the validated "output" type at the same time. You feed it
 convert the whole thing into a `Result`, which will be `Ok` if all the
 fields were `Ok`, or `Err` otherwise.
 
-A demo can be found in the `examples` directory in this project's
-repository.
+A demo can be found in the
+[examples](https://github.com/glasserc/elm-form-result/tree/master/examples)
+directory in [this project's
+repository](https://github.com/glasserc/elm-form-result).
 
 
 ## Hints
@@ -73,7 +75,9 @@ repository.
   - If you find yourself with a `FormResult` that has a lot of fields
     and you're losing track of what field belongs to what output type,
     you might consider splitting up your validation function into
-    smaller validation functions, producing smaller types.
+    smaller validation functions, producing smaller types. For an
+    example of this, check `validateFraction` in [the
+    example](https://github.com/glasserc/elm-form-result/blob/master/examples/src/Main.elm).
 
 @docs FormResult, start, validated, toResult
 @docs maybeValid, maybeErr

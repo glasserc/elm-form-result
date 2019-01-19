@@ -473,7 +473,16 @@ applyMsg msg model =
                             (\errors ->
                                 { errors
                                     | fractionError =
-                                        errors.fractionError |> Maybe.map (\frac -> { frac | numerator = Nothing })
+                                        errors.fractionError
+                                            |> Maybe.map
+                                                (\frac ->
+                                                    { frac
+                                                        | numerator = Nothing
+
+                                                        -- We have to remember also to clear the combination field when any of the fields in the fraction get updated.
+                                                        , combination = Nothing
+                                                    }
+                                                )
                                 }
                             )
             }
@@ -490,7 +499,12 @@ applyMsg msg model =
                                         errors.fractionError
                                             |> Maybe.map
                                                 (\frac ->
-                                                    { frac | denominator = Nothing }
+                                                    { frac
+                                                        | denominator = Nothing
+
+                                                        -- We have to remember also to clear the combination field when any of the fields in the fraction get updated.
+                                                        , combination = Nothing
+                                                    }
                                                 )
                                 }
                             )

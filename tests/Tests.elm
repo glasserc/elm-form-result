@@ -135,11 +135,27 @@ resultTests =
                         |> Form.Result.toResult
                         |> Expect.equal (Err (Just 1))
             ]
+        , describe "checkErr behaves like maybeErr"
+            [ test "when Ok something, form is OK" <|
+                \_ ->
+                    Form.Result.start TestErrorType identity
+                        -- `Ok` contents are discarded
+                        |> Form.Result.checkErr (Ok "aces!")
+                        |> Form.Result.validated (Ok 1)
+                        |> Form.Result.toResult
+                        |> Expect.equal (Ok 1)
+            , test "when Err something, form is Err" <|
+                \_ ->
+                    Form.Result.start identity identity
+                        |> Form.Result.checkErr (Err 1)
+                        |> Form.Result.toResult
+                        |> Expect.equal (Err (Just 1))
+            ]
         , test "unconditionalErr does not change state of form" <|
             \_ ->
                 Form.Result.start TestErrorType identity
                     |> Form.Result.unconditionalErr (Just "hi")
-                    |> Form.Result.unconditionalErr (Just 2)
+                    |> Form.Result.unconditionalErr Nothing
                     |> Form.Result.maybeValid (Just 1)
                     |> Form.Result.toResult
                     |> Expect.equal (Ok 1)

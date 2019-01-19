@@ -2,6 +2,7 @@ module Form.Result exposing
     ( FormResult, start, validated, maybeValid, maybeErr
     , unconditional, unconditionalErr
     , toResult
+    , checkErr
     )
 
 {-| A type for validating a form, collecting errors as we go.
@@ -104,7 +105,8 @@ start err res =
     }
 
 
-{-| Add a field to an "in progress" form validation.
+{-| Add a field to an "in progress" form validation, with `Err
+something` indicating that validation has failed.
 -}
 validated : Result a b -> FormResult (Maybe a -> err) (b -> res) -> FormResult err res
 validated fieldR formResult =
@@ -136,7 +138,8 @@ maybeErr err formResult =
     }
 
 
-{-| Add a possible output field to an "in progress" form validation.
+{-| Add a possible output field to an "in progress" form validation,
+with `Nothing` indicating that validation has failed.
 
 This can be useful if multiple fields in your form type correspond to
 a single field in your output type. In this case, a field in your
@@ -151,6 +154,22 @@ maybeValid fieldM formResult =
     { errorType = formResult.errorType
     , realModel = MaybeEx.andMap fieldM formResult.realModel
     }
+
+
+{-| A shortcut for calling `maybeErr` with a `Result` instead of a
+`Maybe`.
+
+If the field is `Err`, it indicates that validation failed.
+If the field is `Ok whatever`, discard the `whatever` and call the
+error type with `Nothing`.
+
+This is useful when you have a validation function that produces a
+`Result err something` but you don't actually care about the `something`.
+
+-}
+checkErr : Result errField a -> FormResult (Maybe errField -> err) res -> FormResult err res
+checkErr =
+    maybeErr << errToMaybe
 
 
 {-| Add a field to the output type of an "in progress" form

@@ -29,7 +29,7 @@ Styling is left as an exercise for the reader.
 
 import Browser
 import Debug
-import Form.Result exposing (maybeErr, maybeValid, unconditional, unconditionalErr, validated)
+import Form.Result exposing (checkErr, maybeErr, maybeValid, unconditional, unconditionalErr, validated)
 import Form.Result.AnyJust as AnyJust
 import Form.Result.Utils exposing (errToMaybe)
 import Html exposing (Html, button, div, form, h1, input, label, li, span, text, ul)
@@ -264,7 +264,7 @@ validate state =
     Form.Result.start FormErrors User
         |> validated (validateUsername state.username)
         |> validated (validatePassword state)
-        |> maybeErr (errToMaybe <| validateConfirmPassword state)
+        |> checkErr (validateConfirmPassword state)
         |> validated (validateFraction state)
         |> maybeErr checkedTerms
         |> unconditional state.submitAttempts
@@ -347,6 +347,17 @@ validatePassword state =
         |> Form.Result.toResult
 
 
+{-| Verify that the confirmPassword is present and matches the
+password.
+
+Because `()` doesn't contain information, we could have equivalently
+written this as returning `Maybe ConfirmPasswordError`, with `Nothing`
+representing "no problems", but I find it a little counterintuitive to
+use `Nothing` to represent a valid outcome. Instead we use a `Result`
+because `Ok` is clearly positive. Also, this lets us demonstrate
+`Form.Result.checkErr`.
+
+-}
 validateConfirmPassword : FormState -> Result ConfirmPasswordError ()
 validateConfirmPassword state =
     case state.confirmPassword of

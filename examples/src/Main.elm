@@ -94,13 +94,14 @@ present and matches the password field. The password field is
 responsible for all other validations.
 
 Note that the two passwords not matching could be conceivably a bug
-with either field. In the README, I describe this kind of error as a
-"bad combination" error, and I suggest multiple ways to handle
-it. This is the "arbitrarily add it to one field" approach. In theory,
-editing the password field could resolve this problem, but to make
-that work correctly, I would have to add special-case code to the
-UpdatePassword handler, and I didn't. This means if you change the
-first password field to match the confirm, we don't clear the error.
+with either field. In the [README](https://github.com/glasserc/elm-form-result/blob/master/README.md),
+I describe this kind of error as a "bad combination" error, and I
+suggest multiple ways to handle it. This is the "arbitrarily add it to
+one field" approach. In theory, editing the password field could
+resolve this problem, but to make that work correctly, I would have to
+add special-case code to the UpdatePassword handler, and I
+didn't. This means if you change the first password field to match the
+confirm, we don't clear the error.
 
 -}
 type ConfirmPasswordError

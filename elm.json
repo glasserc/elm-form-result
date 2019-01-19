@@ -2,7 +2,7 @@
     "type": "package",
     "name": "glasserc/elm-form-result",
     "summary": "Some utilities for handling forms",
-    "license": "MIT",
+    "license": "BSD-3-Clause",
     "version": "1.0.0",
     "exposed-modules": [
         "Form.Result",

@@ -77,7 +77,7 @@ fields were `Ok`, or `Err` otherwise.
         Form.Result.start FormErrors User
             |> Form.Result.validate (validateUsername state.username)
             |> Form.Result.validate (validatePassword state.password)
-            |> Form.Result.maybeErr (validateMatch state.password state.confirmPassword)
+            |> Form.Result.checkErr (validateMatch state.password state.confirmPassword)
             |> Form.Result.toResult
 
 Note that although `state.confirmPassword` does not contribute

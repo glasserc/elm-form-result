@@ -31,7 +31,6 @@ import Browser
 import Debug
 import Form.Result exposing (checkErr, maybeErr, maybeValid, unconditional, unconditionalErr, validated)
 import Form.Result.AnyJust as AnyJust
-import Form.Result.Utils exposing (errToMaybe)
 import Html exposing (Html, button, div, form, h1, input, label, li, span, text, ul)
 import Html.Attributes as Attributes
 import Html.Events as Events

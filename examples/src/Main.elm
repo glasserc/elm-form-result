@@ -84,24 +84,47 @@ of it, Form.Result doesn't really care.
 -}
 type alias PasswordErrors =
     { passwordMissing : Bool
-    , passwordNotStrongEnough : Bool
-    , passwordsDoNotMatch : Bool
+    , passwordNoLetter : Bool
+    , passwordNoNumber : Bool
+    , passwordNoSymbol : Bool
     }
 
 
 {-| The "Confirm Password" field only validates that the field is
 present and matches the password field. The password field is
 responsible for all other validations.
+
+Note that the two passwords not matching could be conceivably a bug
+with either field. In the README, I describe this kind of error as a
+"bad combination" error, and I suggest multiple ways to handle
+it. This is the "arbitrarily add it to one field" approach. In theory,
+editing the password field could resolve this problem, but to make
+that work correctly, I would have to add special-case code to the
+UpdatePassword handler, and I didn't. This means if you change the
+first password field to match the confirm, we don't clear the error.
+
 -}
 type ConfirmPasswordError
     = ConfirmPasswordMissing
     | ConfirmPasswordDoesntMatch
 
 
+{-| We also have a "bad combination" situation with the fraction
+fields, since we want to ensure n <= d, but when it isn't, it could be
+because n is too big, or because d is too small. This is the
+"introduce a field just for the combination" approach. We clear this
+field's error when either the numerator or the denominator changes,
+but we have to be careful to make sure to display this error, which is
+easier to forget since it isn't attached to any specific output field.
+-}
+type FractionCombinationError
+    = FractionImproper
+
+
 type NumeratorError
     = NumeratorMissing
     | NumeratorNotNumeric
-    | NumeratorFractionImproper
+    | NumeratorNegative
 
 
 
@@ -112,13 +135,14 @@ type NumeratorError
 type DenominatorError
     = DenominatorMissing
     | DenominatorNotNumeric
+    | DenominatorNegative
     | DenominatorZero
-    | DenominatorFractionImproper
 
 
 type alias FractionErrors =
     { numerator : Maybe NumeratorError
     , denominator : Maybe DenominatorError
+    , combination : Maybe FractionCombinationError
     }
 
 
@@ -288,55 +312,37 @@ validatePassword state =
             -- char type.
             not (Char.isAlphaNum c)
 
-        validatePasswordStrength : String -> Maybe String
-        validatePasswordStrength s =
-            let
-                chars =
-                    String.toList s
+        -- Define a little utility to check for properties in the
+        -- password.  If the password is missing, then return True so
+        -- we only show the "password missing" error.
+        passwordHas p =
+            MaybeEx.unwrap True (String.toList >> List.any p) presentPassword
 
-                passwordIsStrong =
-                    List.all ((|>) chars)
-                        [ findAny Char.isAlpha
-                        , findAny Char.isDigit
-                        , findAny isSymbol
-                        ]
-            in
-            if passwordIsStrong then
-                Just s
+        hasLetter =
+            passwordHas Char.isAlpha
 
-            else
-                Nothing
+        hasDigit =
+            passwordHas Char.isDigit
 
-        validatePasswordsMatch s =
-            if s == state.confirmPassword then
-                Just s
-
-            else
-                Nothing
+        hasSymbol =
+            passwordHas isSymbol
 
         validPassword =
             presentPassword
-                |> Maybe.andThen validatePasswordStrength
-                |> Maybe.andThen validatePasswordsMatch
+                |> Maybe.andThen
+                    (\s ->
+                        if hasLetter && hasDigit && hasSymbol then
+                            Just s
 
-        passwordStrong =
-            presentPassword
-                -- `True` so we don't show a password strength error
-                -- if the password is missing.
-                |> MaybeEx.unwrap True
-                    (validatePasswordStrength >> MaybeEx.isJust)
-
-        passwordsMatch =
-            presentPassword
-                -- `True` so we don't show a "passwords don't match" error
-                -- if the password is missing.
-                |> MaybeEx.unwrap True
-                    (validatePasswordsMatch >> MaybeEx.isJust)
+                        else
+                            Nothing
+                    )
     in
     Form.Result.start PasswordErrors identity
         |> andErr (MaybeEx.isNothing presentPassword)
-        |> andErr (not passwordStrong)
-        |> andErr (not passwordsMatch)
+        |> andErr (not hasLetter)
+        |> andErr (not hasDigit)
+        |> andErr (not hasSymbol)
         |> maybeValid validPassword
         |> Form.Result.toResult
 
@@ -361,7 +367,7 @@ validateFraction state =
         makePair a b =
             ( a, b )
 
-        tryParseInt missing notNum field =
+        tryParseInt missing notNum negative field =
             case field of
                 "" ->
                     Err missing
@@ -372,44 +378,47 @@ validateFraction state =
                             Err notNum
 
                         Just i ->
-                            Ok i
+                            if i < 0 then
+                                Err negative
+
+                            else
+                                Ok i
 
         parsedNumerator =
-            tryParseInt NumeratorMissing NumeratorNotNumeric state.favoriteNumerator
+            tryParseInt NumeratorMissing NumeratorNotNumeric NumeratorNegative state.favoriteNumerator
 
         parsedDenominator =
-            tryParseInt DenominatorMissing DenominatorNotNumeric state.favoriteDenominator
+            tryParseInt DenominatorMissing DenominatorNotNumeric DenominatorNegative state.favoriteDenominator
+
+        denominator =
+            parsedDenominator
+                |> Result.andThen
+                    (\d ->
+                        if d == 0 then
+                            Err DenominatorZero
+
+                        else
+                            Ok d
+                    )
 
         fractionIsImproper =
-            case ( parsedNumerator, parsedDenominator ) of
+            case ( parsedNumerator, denominator ) of
                 ( Ok n, Ok d ) ->
-                    n < 0 || d < n
+                    if d < n then
+                        Just FractionImproper
+
+                    else
+                        Nothing
 
                 -- Don't show an improper fraction problem when
                 -- there's problems with either field
                 _ ->
-                    False
-
-        tryAddImproper err field =
-            field
-                |> Result.andThen
-                    (\val ->
-                        if fractionIsImproper then
-                            Err err
-
-                        else
-                            Ok val
-                    )
-
-        numerator =
-            tryAddImproper NumeratorFractionImproper parsedNumerator
-
-        denominator =
-            tryAddImproper DenominatorFractionImproper parsedDenominator
+                    Nothing
     in
     Form.Result.start FractionErrors makePair
-        |> validated numerator
+        |> validated parsedNumerator
         |> validated denominator
+        |> andErr fractionIsImproper
         |> Form.Result.toResult
 
 
@@ -511,6 +520,7 @@ flattenFractionErrors errors =
     AnyJust.start FractionErrors
         |> AnyJust.check errors.numerator
         |> AnyJust.check errors.denominator
+        |> AnyJust.check errors.combination
         |> AnyJust.finish
 
 
@@ -564,13 +574,18 @@ view model =
 
                                           else
                                             Nothing
-                                        , if errors.passwordNotStrongEnough then
-                                            Just (li [] [ text "Your password must contain one letter, one number, and one symbol." ])
+                                        , if errors.passwordNoLetter then
+                                            Just (li [] [ text "Your password must contain at least one letter." ])
 
                                           else
                                             Nothing
-                                        , if errors.passwordsDoNotMatch then
-                                            Just (li [] [ text "Your password does not match the other password field." ])
+                                        , if errors.passwordNoNumber then
+                                            Just (li [] [ text "Your password must contain at least one number." ])
+
+                                          else
+                                            Nothing
+                                        , if errors.passwordNoSymbol then
+                                            Just (li [] [ text "Your password must contain at least one symbol." ])
 
                                           else
                                             Nothing
@@ -592,7 +607,6 @@ view model =
                             Just ConfirmPasswordMissing ->
                                 span errorStyle [ text "Please re-enter your password to ensure it is correct." ]
 
-                            -- FIXME: refactor
                             Just ConfirmPasswordDoesntMatch ->
                                 span errorStyle [ text "Your password does not match the other password field." ]
 
@@ -615,10 +629,8 @@ view model =
                             Just NumeratorNotNumeric ->
                                 span errorStyle [ text "Please enter a number for the numerator." ]
 
-                            -- Render this with the denominator
-                            -- problems. FIXME: restructure
-                            Just NumeratorFractionImproper ->
-                                text ""
+                            Just NumeratorNegative ->
+                                span errorStyle [ text "Your numerator cannot be negative." ]
 
                             Nothing ->
                                 text ""
@@ -632,7 +644,19 @@ view model =
                             Just DenominatorZero ->
                                 span errorStyle [ text "Your denominator cannot be zero." ]
 
-                            Just DenominatorFractionImproper ->
+                            Just DenominatorNegative ->
+                                span errorStyle [ text "Your denominator must be positive." ]
+
+                            Nothing ->
+                                text ""
+
+                        -- Here's where we remember to consult the
+                        -- "bad combination" fraction error. In this
+                        -- case it wasn't that hard to remember
+                        -- because these errors are not displayed next
+                        -- to the input fields themselves.
+                        , case model.formState.errors |> Maybe.andThen .fractionError |> Maybe.andThen .combination of
+                            Just FractionImproper ->
                                 span errorStyle [ text "The fraction you have entered is not between 0 and 1." ]
 
                             Nothing ->

@@ -1,8 +1,8 @@
 module Form.Result exposing
     ( FormResult, start, validated, maybeValid, maybeErr
+    , checkErr, ifMissing
     , unconditional, unconditionalErr
     , toResult
-    , checkErr
     )
 
 {-| A type for validating a form, collecting errors as we go.
@@ -76,6 +76,7 @@ repository.
     smaller validation functions, producing smaller types.
 
 @docs FormResult, start, validated, maybeValid, maybeErr
+@docs checkErr, ifMissing
 @docs unconditional, unconditionalErr
 @docs toResult
 
@@ -170,6 +171,23 @@ This is useful when you have a validation function that produces a
 checkErr : Result errField a -> FormResult (Maybe errField -> err) res -> FormResult err res
 checkErr =
     maybeErr << errToMaybe
+
+
+{-| A shortcut for calling `validated` with a `Maybe` instead of a
+`Result`.
+
+If the field is `Nothing`, it indicates that the validation failed,
+and the given error is what is used to indicate the error.
+If the field is `Just something`, use the `something` as the output
+and call the error type with `Nothing`.
+
+This is useful e.g. when handling select fields, where the only thing
+you want to validate is that the user actually selected something.
+
+-}
+ifMissing : errField -> Maybe resField -> FormResult (Maybe errField -> err) (resField -> res) -> FormResult err res
+ifMissing err fieldM =
+    validated (Result.fromMaybe err fieldM)
 
 
 {-| Add a field to the output type of an "in progress" form

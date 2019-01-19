@@ -151,6 +151,20 @@ resultTests =
                         |> Form.Result.toResult
                         |> Expect.equal (Err (Just 1))
             ]
+        , describe "ifMissing"
+            [ test "when Just something, form is OK" <|
+                \_ ->
+                    Form.Result.start TestErrorType identity
+                        |> Form.Result.ifMissing "never" (Just 1)
+                        |> Form.Result.toResult
+                        |> Expect.equal (Ok 1)
+            , test "when Nothing, form is Err" <|
+                \_ ->
+                    Form.Result.start identity identity
+                        |> Form.Result.ifMissing 1 Nothing
+                        |> Form.Result.toResult
+                        |> Expect.equal (Err (Just 1))
+            ]
         , test "unconditionalErr does not change state of form" <|
             \_ ->
                 Form.Result.start TestErrorType identity

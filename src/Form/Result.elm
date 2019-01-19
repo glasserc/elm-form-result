@@ -82,7 +82,7 @@ repository.
 
 -}
 
-import Form.Result.Utils exposing (errToMaybe, ifNothing)
+import Form.Result.Utils exposing (errToMaybe)
 import Maybe.Extra as MaybeEx
 
 

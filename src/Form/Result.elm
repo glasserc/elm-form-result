@@ -1,8 +1,8 @@
 module Form.Result exposing
-    ( FormResult, start, validated, maybeValid, maybeErr
+    ( FormResult, start, validated, toResult
+    , maybeValid, maybeErr
     , checkErr, ifMissing
     , unconditional, unconditionalErr
-    , toResult
     )
 
 {-| A type for validating a form, collecting errors as we go.
@@ -75,10 +75,10 @@ repository.
     you might consider splitting up your validation function into
     smaller validation functions, producing smaller types.
 
-@docs FormResult, start, validated, maybeValid, maybeErr
+@docs FormResult, start, validated, toResult
+@docs maybeValid, maybeErr
 @docs checkErr, ifMissing
 @docs unconditional, unconditionalErr
-@docs toResult
 
 -}
 

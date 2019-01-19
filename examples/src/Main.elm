@@ -29,7 +29,7 @@ Styling is left as an exercise for the reader.
 
 import Browser
 import Debug
-import Form.Result exposing (andErr, maybeValid, unconditional, validated)
+import Form.Result exposing (maybeErr, maybeValid, unconditional, unconditionalErr, validated)
 import Form.Result.AnyJust as AnyJust
 import Form.Result.Utils exposing (errToMaybe)
 import Html exposing (Html, button, div, form, h1, input, label, li, span, text, ul)
@@ -264,9 +264,9 @@ validate state =
     Form.Result.start FormErrors User
         |> validated (validateUsername state.username)
         |> validated (validatePassword state)
-        |> andErr (errToMaybe <| validateConfirmPassword state)
+        |> maybeErr (errToMaybe <| validateConfirmPassword state)
         |> validated (validateFraction state)
-        |> andErr checkedTerms
+        |> maybeErr checkedTerms
         |> unconditional state.submitAttempts
         |> Form.Result.toResult
 
@@ -339,10 +339,10 @@ validatePassword state =
                     )
     in
     Form.Result.start PasswordErrors identity
-        |> andErr (MaybeEx.isNothing presentPassword)
-        |> andErr (not hasLetter)
-        |> andErr (not hasDigit)
-        |> andErr (not hasSymbol)
+        |> unconditionalErr (MaybeEx.isNothing presentPassword)
+        |> unconditionalErr (not hasLetter)
+        |> unconditionalErr (not hasDigit)
+        |> unconditionalErr (not hasSymbol)
         |> maybeValid validPassword
         |> Form.Result.toResult
 
@@ -418,7 +418,7 @@ validateFraction state =
     Form.Result.start FractionErrors makePair
         |> validated parsedNumerator
         |> validated denominator
-        |> andErr fractionIsImproper
+        |> maybeErr fractionIsImproper
         |> Form.Result.toResult
 
 

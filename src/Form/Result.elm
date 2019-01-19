@@ -1,5 +1,6 @@
 module Form.Result exposing
-    ( FormResult, start, validated, maybeValid, andErr, unconditional
+    ( FormResult, start, validated, maybeValid, maybeErr
+    , unconditional, unconditionalErr
     , toResult
     )
 
@@ -73,7 +74,8 @@ repository.
     you might consider splitting up your validation function into
     smaller validation functions, producing smaller types.
 
-@docs FormResult, start, validated, maybeValid, andErr, unconditional
+@docs FormResult, start, validated, maybeValid, maybeErr
+@docs unconditional, unconditionalErr
 @docs toResult
 
 -}
@@ -111,7 +113,8 @@ validated fieldR formResult =
     }
 
 
-{-| Add something to just the error side of an "in progress" form validation.
+{-| Add something to just the error side of an "in progress" form
+validation, with `Just err` meaning that validation has failed.
 
 This can be useful if multiple fields in your form type correspond to
 a single field in your output type. In this case, you'll probably have
@@ -120,10 +123,16 @@ anything in your output type, so you'll want to feed a possible error
 in to each without touching the output type.
 
 -}
-andErr : errField -> FormResult (errField -> err) res -> FormResult err res
-andErr err formResult =
+maybeErr : Maybe errField -> FormResult (Maybe errField -> err) res -> FormResult err res
+maybeErr err formResult =
     { errorType = formResult.errorType err
-    , realModel = formResult.realModel
+    , realModel =
+        case err of
+            Just _ ->
+                Nothing
+
+            Nothing ->
+                formResult.realModel
     }
 
 
@@ -134,7 +143,7 @@ a single field in your output type. In this case, a field in your
 output type might not be present, but without an error in the very
 next form error field. In that case, you can use this function to
 incorporate a `Maybe field`, and add `Maybe error`s using
-`andErr`.
+`maybeErr`.
 
 -}
 maybeValid : Maybe resField -> FormResult err (resField -> res) -> FormResult err res
@@ -155,6 +164,21 @@ unconditional : resField -> FormResult err (resField -> res) -> FormResult err r
 unconditional field formResult =
     { errorType = formResult.errorType
     , realModel = MaybeEx.andMap (Just field) formResult.realModel
+    }
+
+
+{-| Add something to just the error side of an "in progress" form
+validation, unconditionally.
+
+This can be useful if your error type has fields that aren't Maybe, or
+when `Just err` in an error field doesn't necessarily mean that the
+validation failed.
+
+-}
+unconditionalErr : errField -> FormResult (errField -> err) res -> FormResult err res
+unconditionalErr err formResult =
+    { errorType = formResult.errorType err
+    , realModel = formResult.realModel
     }
 
 

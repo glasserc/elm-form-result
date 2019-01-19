@@ -113,9 +113,34 @@ resultTests =
         , test "can reorder fields" <|
             \_ ->
                 Form.Result.start TestErrorType TestOutputType
-                    |> Form.Result.andErr Nothing
+                    |> Form.Result.maybeErr Nothing
                     |> Form.Result.validated (Ok 1)
                     |> Form.Result.maybeValid (Just "hi")
                     |> Form.Result.toResult
                     |> Expect.equal (Ok <| TestOutputType 1 "hi")
+        , describe "maybeErr"
+            [ test "when Nothing, form is OK" <|
+                \_ ->
+                    Form.Result.start TestErrorType identity
+                        |> Form.Result.maybeErr Nothing
+                        |> Form.Result.validated (Ok 1)
+                        -- We don't fill out all the error fields here. If
+                        -- the test fails, we'll get some Err (Maybe Int -> TestErrorType).
+                        |> Form.Result.toResult
+                        |> Expect.equal (Ok 1)
+            , test "when Just something, form is Err" <|
+                \_ ->
+                    Form.Result.start identity identity
+                        |> Form.Result.maybeErr (Just 1)
+                        |> Form.Result.toResult
+                        |> Expect.equal (Err (Just 1))
+            ]
+        , test "unconditionalErr does not change state of form" <|
+            \_ ->
+                Form.Result.start TestErrorType identity
+                    |> Form.Result.unconditionalErr (Just "hi")
+                    |> Form.Result.unconditionalErr (Just 2)
+                    |> Form.Result.maybeValid (Just 1)
+                    |> Form.Result.toResult
+                    |> Expect.equal (Ok 1)
         ]

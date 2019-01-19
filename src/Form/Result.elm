@@ -23,8 +23,10 @@ You want to validate it into a user object:
         , password : String
         }
 
-But validation may not succeed, and when it does, you want to produce
-a `FormErrors`:
+When we build up our user type, even one bad field is enough to fail
+the validation. But when we display the invalid form, we want to show
+the problems for every single field, not just the first bad one. So
+when validation doesn't succeed, you want to produce a `FormErrors`:
 
     type UsernameError
         = UsernameMissing
@@ -39,7 +41,8 @@ a `FormErrors`:
         , confirmPassword : Maybe PasswordError
         }
 
-You might try to build up a User using `Maybe.Extra.andMap`:
+We want to stop building the User as soon as we get one failed field,
+so you could try using `Maybe.Extra.andMap`:
 
     validateUser : FormData -> Maybe User
     validateUser state =
@@ -59,7 +62,29 @@ and the validated "output" type at the same time. You feed it
 convert the whole thing into a `Result`, which will be `Ok` if all the
 fields were `Ok`, or `Err` otherwise.
 
-A demo can be found in the
+    validateUsername : String -> Either UsernameError String
+    validateUsername s =
+        if s == "" then Err UsernameMissing else Ok s
+
+    validatePassword : String -> Either PasswordError String
+    validatePassword s = ...
+
+    validateMatch : String -> String -> Either PasswordError String
+    validateMatch password confirmPassword = ...
+
+    validateUser : FormData -> Either FormErrors User
+    validateUser state =
+        Form.Result.start FormErrors User
+            |> Form.Result.validate (validateUsername state.username)
+            |> Form.Result.validate (validatePassword state.password)
+            |> Form.Result.maybeErr (validateMatch state.password state.confirmPassword)
+            |> Form.Result.toResult
+
+Note that although `state.confirmPassword` does not contribute
+anything to our output type, we still need to check it for errors, and
+any errors in it should cause the validation to fail.
+
+A fully-functioning demo can be found in the
 [examples](https://github.com/glasserc/elm-form-result/tree/master/examples)
 directory in [this project's
 repository](https://github.com/glasserc/elm-form-result).
@@ -70,7 +95,9 @@ repository](https://github.com/glasserc/elm-form-result).
   - `FormResult` is easiest to use if the order of fields in your error
     type corresponds to the order of fields in your output type. (Your
     form state type and generated HTML can be in any order you like, of
-    course.)
+    course.) If you have to feed fields to your output type and your
+    error type in a different order, you can do that using
+    `maybeValid` and `maybeErr`, but it's easy to get confused.
 
   - If you find yourself with a `FormResult` that has a lot of fields
     and you're losing track of what field belongs to what output type,

@@ -155,13 +155,13 @@ resultTests =
             [ test "when Just something, form is OK" <|
                 \_ ->
                     Form.Result.start TestErrorType identity
-                        |> Form.Result.ifMissing "never" (Just 1)
+                        |> Form.Result.ifMissing (Just 1) "never"
                         |> Form.Result.toResult
                         |> Expect.equal (Ok 1)
             , test "when Nothing, form is Err" <|
                 \_ ->
                     Form.Result.start identity identity
-                        |> Form.Result.ifMissing 1 Nothing
+                        |> Form.Result.ifMissing Nothing 1
                         |> Form.Result.toResult
                         |> Expect.equal (Err (Just 1))
             ]

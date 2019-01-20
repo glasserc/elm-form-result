@@ -31,6 +31,7 @@ import Browser
 import Debug
 import Form.Result exposing (checkErr, maybeErr, maybeValid, unconditional, unconditionalErr, validated)
 import Form.Result.AnyJust as AnyJust
+import Form.Result.Utils exposing (nothingAs)
 import Html exposing (Html, button, div, form, h1, input, label, li, span, text, ul)
 import Html.Attributes as Attributes
 import Html.Events as Events
@@ -375,9 +376,6 @@ validateConfirmPassword state =
 validateFraction : FormState -> Result FractionErrors Fraction
 validateFraction state =
     let
-        makePair a b =
-            ( a, b )
-
         tryParseInt missing notNum negative field =
             case field of
                 "" ->
@@ -412,24 +410,31 @@ validateFraction state =
                             Ok d
                     )
 
-        fractionIsImproper =
-            case ( parsedNumerator, denominator ) of
-                ( Ok n, Ok d ) ->
-                    if d < n then
-                        Just FractionImproper
+        makeFraction n d =
+            if d < n then
+                Nothing
 
-                    else
-                        Nothing
+            else
+                Just ( n, d )
 
-                -- Don't show an improper fraction problem when
-                -- there's problems with either field
-                _ ->
-                    Nothing
+        -- Put numerator and denominator together.
+        -- Nothing means problem with prerequisites -- either
+        -- numerator or denominator were missing.
+        -- Just Nothing means a problem with the combination.
+        -- Just (Just frac) means combination was successful.
+        validFraction : Maybe (Maybe Fraction)
+        validFraction =
+            Maybe.map makeFraction (Result.toMaybe parsedNumerator)
+                |> MaybeEx.andMap (Result.toMaybe denominator)
     in
-    Form.Result.start FractionErrors makePair
-        |> validated parsedNumerator
-        |> validated denominator
-        |> maybeErr fractionIsImproper
+    Form.Result.start FractionErrors identity
+        |> checkErr parsedNumerator
+        |> checkErr denominator
+        |> maybeValid (validFraction |> MaybeEx.join)
+        -- Don't show an improper fraction problem when there's
+        -- problems with either field. In other words, show errors
+        -- only if validFraction was `Just Nothing`.
+        |> maybeErr (validFraction |> Maybe.andThen (nothingAs FractionImproper))
         |> Form.Result.toResult
 
 

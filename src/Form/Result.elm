@@ -1,7 +1,7 @@
 module Form.Result exposing
     ( FormResult, start, validated, toResult
     , maybeValid, maybeErr
-    , checkErr, ifMissing
+    , checkErr, ifMissing, missingAs
     , unconditional, unconditionalErr
     )
 
@@ -108,7 +108,7 @@ repository](https://github.com/glasserc/elm-form-result).
 
 @docs FormResult, start, validated, toResult
 @docs maybeValid, maybeErr
-@docs checkErr, ifMissing
+@docs checkErr, ifMissing, missingAs
 @docs unconditional, unconditionalErr
 
 -}
@@ -219,6 +219,13 @@ you want to validate is that the user actually selected something.
 ifMissing : Maybe resField -> errField -> FormResult (Maybe errField -> err) (resField -> res) -> FormResult err res
 ifMissing fieldM err =
     validated (Result.fromMaybe err fieldM)
+
+
+{-| The same as `ifMissing`, but with the argument order reversed.
+-}
+missingAs : errField -> Maybe resField -> FormResult (Maybe errField -> err) (resField -> res) -> FormResult err res
+missingAs err fieldM =
+    ifMissing fieldM err
 
 
 {-| Add a field to the output type of an "in progress" form

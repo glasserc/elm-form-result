@@ -1,8 +1,8 @@
-module Form.Result.Utils exposing (errToMaybe, ifNothing)
+module Form.Result.Utils exposing (errToMaybe, ifNothing, nothingAs)
 
 {-| Some basic utilities that don't belong anywhere else.
 
-@docs errToMaybe, ifNothing
+@docs errToMaybe, ifNothing, nothingAs
 
 -}
 
@@ -43,3 +43,10 @@ ifNothing val alt =
 
         Just _ ->
             Nothing
+
+
+{-| Same as `ifNothing`, but with the argument order reversed.
+-}
+nothingAs : b -> Maybe a -> Maybe b
+nothingAs alt val =
+    ifNothing val alt

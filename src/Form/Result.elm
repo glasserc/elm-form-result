@@ -216,8 +216,8 @@ This is useful e.g. when handling select fields, where the only thing
 you want to validate is that the user actually selected something.
 
 -}
-ifMissing : errField -> Maybe resField -> FormResult (Maybe errField -> err) (resField -> res) -> FormResult err res
-ifMissing err fieldM =
+ifMissing : Maybe resField -> errField -> FormResult (Maybe errField -> err) (resField -> res) -> FormResult err res
+ifMissing fieldM err =
     validated (Result.fromMaybe err fieldM)
 
 

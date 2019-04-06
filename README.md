@@ -77,13 +77,17 @@ be rejected. In our movie review example, we'd have a
 `MovieReviewErrors` type with a field called `rating : RatingError`,
 which parallels the `rating` field in our form type.
 
-Instead of a separate error type, some people like to change their
-form type -- augment each field with some kind of error status.
-Keeping errors in a separate type makes it a little more obvious
-whether the form has been validated already and whether there are any
-errors outstanding that the user has to address. It's also a little
-clearer when you have to present errors that aren't tied specifically
-to a single form field. More about this later.
+(Instead of a separate error type, some people like to change their
+form type -- augment each field with some kind of error status. The
+advantage here is that it's much easier to remember to render errors
+and clear them as the corresponding field gets modified, because the
+error status is "attached" to the field data. However, keeping errors
+in a separate type makes it a little more obvious whether the form has
+been validated already and whether there are any errors outstanding
+that the user has to address (see "clearing errors" below). It's also
+a little clearer when you have to present errors that aren't tied
+specifically to a single form field (see "bad combination"
+below). `elm-form-result` is meant for use with a form error type.)
 
 Some people like to use `String`s as the possible errors, but I prefer
 a distinct type for each field to try to make it harder to
@@ -119,9 +123,9 @@ errors coming from the corresponding fields in the form error
 type. The user will probably try to edit these fields to correct the
 errors. Until we validate again, we don't know whether the new field
 values are still bad or not, and it leads to a bad user experience to
-tell the user that the errors are bad if they might not be. So as we
-update our form type fields, we also want to erase the corresponding
-form error type fields.
+tell the user that the field contents are bad if they might not be. So
+as we update our form type fields, we also want to erase the
+corresponding form error type fields.
 
 As the user corrects all the fields, eventually we end up in a state
 where although we have `Just errors`, but no field in `errors` is

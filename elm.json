@@ -3,7 +3,7 @@
     "name": "glasserc/elm-form-result",
     "summary": "Some utilities for handling forms",
     "license": "BSD-3-Clause",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "exposed-modules": [
         "Form.Result",
         "Form.Result.AnyJust",

@@ -19,15 +19,7 @@ suite =
 utilsTests : Test
 utilsTests =
     describe "Utils module"
-        [ describe "errToMaybe"
-            [ test "on Ok produces Nothing" <|
-                \_ ->
-                    Expect.equal Nothing (Utils.errToMaybe <| Ok True)
-            , test "on Err produces Just" <|
-                \_ ->
-                    Expect.equal (Just 4) (Utils.errToMaybe <| Err 4)
-            ]
-        , describe "ifNothing"
+        [ describe "ifNothing"
             [ test "on Just produces Nothing" <|
                 \_ ->
                     Expect.equal Nothing (Utils.ifNothing (Just 5) "hello")

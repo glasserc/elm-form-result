@@ -1,31 +1,10 @@
-module Form.Result.Utils exposing (errToMaybe, ifNothing, nothingAs)
+module Form.Result.Utils exposing (ifNothing, nothingAs)
 
 {-| Some basic utilities that don't belong anywhere else.
 
-@docs errToMaybe, ifNothing, nothingAs
+@docs ifNothing, nothingAs
 
 -}
-
-
-{-| Extract the `Err` from a `Result`, if present.
--}
-
-
-
--- FIXME: this probably belongs in Result or Result.Extra. It's the
--- same as the `error` function from
--- https://github.com/elm-community/result-extra/pull/19, but it's not
--- clear what the fate of that PR is.
-
-
-errToMaybe : Result err a -> Maybe err
-errToMaybe r =
-    case r of
-        Ok _ ->
-            Nothing
-
-        Err err ->
-            Just err
 
 
 {-| Look for `Nothing`, using some other value to show you found it.

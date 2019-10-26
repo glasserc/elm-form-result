@@ -113,8 +113,8 @@ repository](https://github.com/glasserc/elm-form-result).
 
 -}
 
-import Form.Result.Utils exposing (errToMaybe)
 import Maybe.Extra as MaybeEx
+import Result.Extra exposing (error)
 
 
 {-| An "in progress" form validation.
@@ -142,7 +142,7 @@ something` indicating that validation has failed.
 -}
 validated : Result a b -> FormResult (Maybe a -> err) (b -> res) -> FormResult err res
 validated fieldR formResult =
-    { errorType = formResult.errorType (errToMaybe fieldR)
+    { errorType = formResult.errorType (error fieldR)
     , realModel = formResult.realModel |> MaybeEx.andMap (Result.toMaybe fieldR)
     }
 
@@ -201,7 +201,7 @@ This is useful when you have a validation function that produces a
 -}
 checkErr : Result errField a -> FormResult (Maybe errField -> err) res -> FormResult err res
 checkErr =
-    maybeErr << errToMaybe
+    maybeErr << error
 
 
 {-| A shortcut for calling `validated` with a `Maybe` instead of a
